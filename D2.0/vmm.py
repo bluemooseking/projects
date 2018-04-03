@@ -11,6 +11,7 @@ import random
 class VMM:
     # Debug Attributes
     logger = None
+    fault_file = None
     
     # Physical Attributes
     PHYS_MEM_SIZE = None
@@ -26,13 +27,26 @@ class VMM:
     LRU_VIRT_ADDR = None
     PHYS_MEM = None
     PHYS_BAK = None
+      
+    def init_fault_file(self, fault_file):
+        if fault_file != None:
+            self.fault_file = fault_file
+            with open(self.fault_file, 'w') as the_file:
+                the_file.write('vaddr,type\n')
+            
+    def append_fault_file(self, vaddr, ftype):
+        if self.fault_file != None:
+            with open(self.fault_file, 'a') as the_file:
+                the_file.write('%d,%s\n' % (vaddr, ftype))
             
     def __init__(self, phys_mem_size, phys_bak_size, 
+                 fault_file = None,
                  loglevel = logging.ERROR):
         # Init Debug
         self.logger = logging.getLogger('vmm')
         self.logger.setLevel(loglevel)
         self.logger.debug("Welcome to VMM logger")
+        self.init_fault_file(fault_file)    
         
         # Init Physical
         phys_all_size = phys_mem_size + phys_bak_size
@@ -100,8 +114,10 @@ class VMM:
         
     def get_phys_mem_off(self, virt_addr):
         if (self.VIRT_ADDR_MODE[virt_addr] == "bak"):
+            self.append_fault_file(virt_addr, 'major')
             return self.restore(virt_addr)
         else:
+            self.append_fault_file(virt_addr, 'none')
             index = self.LRU_VIRT_ADDR.index(virt_addr)
             self.LRU_VIRT_ADDR.insert(0, self.LRU_VIRT_ADDR.pop(index))
             return self.VIRT_ADDR_OFFS[virt_addr]
@@ -115,8 +131,8 @@ class VMM:
         m_off = self.get_phys_mem_off(virt_addr)
         self.PHYS_MEM[m_off] = val
         
-def validate_vmm():
-    vmm = VMM(5, 10, loglevel = logging.DEBUG)
+def __validate_vmm(ll = logging.DEBUG):
+    vmm = VMM(5, 10, loglevel = ll, fault_file = 'validate.csv')
     vmm.get_alloc()
     vmm.alloc_all()
     
@@ -127,5 +143,6 @@ def validate_vmm():
         if (data[i] != vmm.read(i)):
             logging.critical("VMM VALIDATION FAILED")
     logging.critical("VMM VALIDATION PASSED")
- 
-validate_vmm()
+    
+def validate_vmm():
+    __validate_vmm(ll = logging.ERROR)
