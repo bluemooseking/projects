@@ -53,6 +53,7 @@ def gen_binary_tree_faults_A(filename = None):
                 vaddr *= 2
                 vaddr += 2 if ((j << k) & tree_mask) else 1
                 
-gen_binary_tree_faults_A('faults_treeA.csv')          
+#gen_sequential_array_faults('faults_seq.csv')
+#gen_binary_tree_faults_A('faults_treeA.csv')          
             
             

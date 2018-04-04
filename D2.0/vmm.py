@@ -32,7 +32,7 @@ class VMM:
         if fault_file != None:
             self.fault_file = fault_file
             with open(self.fault_file, 'w') as the_file:
-                the_file.write('vaddr,type\n')
+                the_file.write('vaddr,fault_type\n')
             
     def append_fault_file(self, vaddr, ftype):
         if self.fault_file != None:
