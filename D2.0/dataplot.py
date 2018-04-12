@@ -35,5 +35,5 @@ def run_visuals(filename = None):
     vaddr_histogram(filename, data)
     fault_type_cumulative(filename, data)
     
-#run_visuals('faults_treeA.csv')
-#run_visuals('faults_seq.csv')
+run_visuals('faults_treeA.csv')
+run_visuals('faults_seq.csv')
