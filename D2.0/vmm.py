@@ -9,6 +9,7 @@ import logging
 import random
 from predictors import PRED_SEQ
 from counter import COUNTER
+from vaddr import VADDR
 
 class VMM:
     # Debug Attributes
@@ -245,15 +246,21 @@ class VMM:
             
         self.LRU_VIRT_ADDR = list(range(self.PHYS_MEM_SIZE))
         
-        return 0
-        
-    def read(self, virt_addr):
+        mem = VADDR(self)
+        return mem
+   
+    """
+    @property
+    def vaddr(self, virt_addr):
         m_off = self.get_phys_mem_off(virt_addr)
         return self.PHYS_MEM[m_off]
         
-    def write(self, virt_addr, val):
+    @vaddr.setter
+    def vaddr(self, virt_addr, val):
         m_off = self.get_phys_mem_off(virt_addr)
         self.PHYS_MEM[m_off] = val
+    """
+    
 
 """
 =============================================
@@ -270,14 +277,12 @@ def validate_vmm(ll = logging.ERROR):
               pred_def = {'mode' : 'seq'}
               )
     vmm.get_alloc()
-    vmm.alloc_all()
+    mem = vmm.alloc_all()
     
     data = random.sample(range(all_size * 100), all_size)
     for i in range(all_size):
-        vmm.write(i, data[i])
+        mem[i] = data[i]
     for i in range(all_size):
-        if (data[i] != vmm.read(i)):
+        if (data[i] != mem[i]):
             logging.critical("VMM VALIDATION FAILED")
     logging.critical("VMM VALIDATION PASSED")
-        
-validate_vmm(logging.DEBUG)
