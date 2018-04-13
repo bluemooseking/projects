@@ -30,7 +30,7 @@ def test_sequential_array(filename = None,
     
 def test_binary_tree(filename = None,
                      pred_def = None):    
-    tree_depth = 12
+    tree_depth = 13
     tree_size = 2 ** tree_depth
     tree_mask = 2 ** (tree_depth - 2)
     m_ratio = 0.01
