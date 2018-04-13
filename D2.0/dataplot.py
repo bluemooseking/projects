@@ -11,10 +11,17 @@ import matplotlib.pyplot as plt
 import os
 
 def vaddr_histogram(filename, data):
-    data['vaddr'].hist(bins = 100)
+    x = []
+    xt = []
+    for ftype in data['fault_type'].unique():
+        x.append(data.loc[data['fault_type'] == ftype]['vaddr'])
+        xt.append(ftype)
+    plt.hist(x, bins = 100, histtype = 'bar', stacked = True, label = xt)
     plt.title('Vaddr Histogram: %s' % (filename))
     plt.xlabel('vaddr')
     plt.ylabel('hit count')
+    plt.yscale('log')
+    plt.legend(loc = 2)
     plt.show()
 
 def fault_type_cumulative(filename, data):
