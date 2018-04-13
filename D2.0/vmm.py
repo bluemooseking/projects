@@ -86,7 +86,12 @@ class VMM:
                 'CURR_ALLOC_SIZE':  COUNTER('Current Alloc Size', self.logger),
                 'PRED_SPACE_AVAIL': COUNTER('Prediction Space Avail', self.logger),
                 'PRED_WHEN_MEM':    COUNTER('Prediction when Mem', self.logger),
-                'PRED_WHEN_PRED':   COUNTER('Prediction when Pred', self.logger)
+                'PRED_WHEN_PRED':   COUNTER('Prediction when Pred', self.logger),
+                
+                # Faults
+                'FAULT_MAJ':        COUNTER('Fault - Major', self.logger),
+                'FAULT_MIN':        COUNTER('Fault - Minor', self.logger),
+                'FAULT_NONE':       COUNTER('Fault - None', self.logger),
         }
         # Init Data structs
         self.VIRT_ADDR_MODE = [None] * phys_all_size
@@ -200,12 +205,14 @@ class VMM:
     def get_phys_mem_off(self, virt_addr):
         mode, off = self.get_virt_addr_state(virt_addr)
         if mode == "bak":
+            self._COUNTERS['FAULT_MAJ'].inc()
             self.append_fault_file(virt_addr, 'major')
             new_off = self.fetch_to_mem(virt_addr)
             self.fetch_preds(virt_addr) 
             return new_off
         
         elif mode == "pred":
+            self._COUNTERS['FAULT_MIN'].inc()
             self.append_fault_file(virt_addr, 'minor')
             self.enable_in_mem(virt_addr)
             self.fetch_preds(virt_addr)  
@@ -213,6 +220,7 @@ class VMM:
         
         else:
             assert mode == "mem"
+            self._COUNTERS['FAULT_NONE'].inc()
             self.append_fault_file(virt_addr, 'none')
             self.lru_reset(virt_addr)
             return off
