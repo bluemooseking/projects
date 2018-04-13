@@ -22,9 +22,9 @@ class VMM:
     VIRT_MEM_SIZE = None  
 
     # Data structures
-    VIRT_ADDR_MODE = None
-    VIRT_ADDR_OFFS = None
-    LRU_VIRT_ADDR = None
+    VADDR_MODE = None
+    VADDR_OFFS = None
+    LRU_VADDR = None
     PHYS_MEM = None
     PHYS_BAK = None
     
@@ -99,9 +99,9 @@ class VMM:
                 'FAULT_NONE':       COUNTER('Fault - None', self.logger),
         }
         # Init Data structs
-        self.VIRT_ADDR_MODE = [None] * phys_all_size
-        self.VIRT_ADDR_OFFS = [None] * phys_all_size
-        self.LRU_VIRT_ADDR = [None] * phys_mem_size
+        self.VADDR_MODE = [None] * phys_all_size
+        self.VADDR_OFFS = [None] * phys_all_size
+        self.LRU_VADDR = [None] * phys_mem_size
         self.PHYS_MEM = [0] * phys_mem_size
         self.PHYS_BAK = [0] * phys_bak_size
         
@@ -119,28 +119,28 @@ class VMM:
         self.logger.debug("current alloc = %d", val)
         return val
     
-    def is_virt_addr(self, virt_addr):
-        return (virt_addr < self._COUNTERS['CURR_ALLOC_SIZE'].val)
+    def is_vaddr(self, vaddr):
+        return (vaddr < self._COUNTERS['CURR_ALLOC_SIZE'].val)
     
-    def set_virt_addr_state(self, virt_addr, state, off):
-        self.VIRT_ADDR_MODE[virt_addr] = state
-        self.VIRT_ADDR_OFFS[virt_addr] = off
+    def set_vaddr_state(self, vaddr, state, off):
+        self.VADDR_MODE[vaddr] = state
+        self.VADDR_OFFS[vaddr] = off
     
-    def get_virt_addr_state(self, virt_addr):
-        return (self.VIRT_ADDR_MODE[virt_addr], self.VIRT_ADDR_OFFS[virt_addr])
+    def get_vaddr_state(self, vaddr):
+        return (self.VADDR_MODE[vaddr], self.VADDR_OFFS[vaddr])
         
-    def get_oldest_virt_addr(self):
-        return self.LRU_VIRT_ADDR.pop()
+    def get_oldest_vaddr(self):
+        return self.LRU_VADDR.pop()
     
-    def set_newest_virt_addr(self, virt_addr):
-        self.LRU_VIRT_ADDR.insert(0, virt_addr)
+    def set_newest_vaddr(self, vaddr):
+        self.LRU_VADDR.insert(0, vaddr)
     
-    def pop_specific_virt_addr(self, virt_addr):
-        index = self.LRU_VIRT_ADDR.index(virt_addr)
-        return self.LRU_VIRT_ADDR.pop(index)
+    def pop_specific_vaddr(self, vaddr):
+        index = self.LRU_VADDR.index(vaddr)
+        return self.LRU_VADDR.pop(index)
         
-    def lru_reset(self, virt_addr):
-        self.set_newest_virt_addr(self.pop_specific_virt_addr(virt_addr))
+    def lru_reset(self, vaddr):
+        self.set_newest_vaddr(self.pop_specific_vaddr(vaddr))
         
     def __phys_swap(self, m_off, b_off):
         self.logger.debug("phys_swap: m(%d) <-> b(%d)", m_off, b_off)
@@ -154,10 +154,10 @@ class VMM:
     =============================================
     """
        
-    def fetch_to_mem(self, i_virt_addr, is_pred=False):      
-        o_virt_addr = self.get_oldest_virt_addr()
-        o_mode, o_off = self.get_virt_addr_state(o_virt_addr)
-        i_mode, i_off = self.get_virt_addr_state(i_virt_addr)
+    def fetch_to_mem(self, i_vaddr, is_pred=False):      
+        o_vaddr = self.get_oldest_vaddr()
+        o_mode, o_off = self.get_vaddr_state(o_vaddr)
+        i_mode, i_off = self.get_vaddr_state(i_vaddr)
         assert i_mode == 'bak'
         
         self.__phys_swap(o_off, i_off)
@@ -165,70 +165,70 @@ class VMM:
         if o_mode == "pred":
             self._COUNTERS['PRED_SPACE_AVAIL'].inc()
             
-        self.set_virt_addr_state(o_virt_addr, "bak", i_off)
+        self.set_vaddr_state(o_vaddr, "bak", i_off)
         
-        self.set_newest_virt_addr(i_virt_addr)
+        self.set_newest_vaddr(i_vaddr)
         if is_pred:
-            self.set_virt_addr_state(i_virt_addr, "pred", o_off)
+            self.set_vaddr_state(i_vaddr, "pred", o_off)
         else:
-            self.set_virt_addr_state(i_virt_addr, "mem", o_off)
+            self.set_vaddr_state(i_vaddr, "mem", o_off)
 
         return o_off
     
-    def enable_in_mem(self, virt_addr):
-        mode, off = self.get_virt_addr_state(virt_addr)
+    def enable_in_mem(self, vaddr):
+        mode, off = self.get_vaddr_state(vaddr)
         assert mode == "pred"
-        self.set_virt_addr_state(virt_addr, "mem", off)
+        self.set_vaddr_state(vaddr, "mem", off)
         self._COUNTERS['PRED_SPACE_AVAIL'].inc()
-        self.lru_reset(virt_addr)
+        self.lru_reset(vaddr)
  
-    def fetch_as_pred(self, virt_addr):
-        if not self.is_virt_addr(virt_addr):
+    def fetch_as_pred(self, vaddr):
+        if not self.is_vaddr(vaddr):
             return
         
-        mode, off = self.get_virt_addr_state(virt_addr)
+        mode, off = self.get_vaddr_state(vaddr)
         if mode == "mem":
-            self.lru_reset(virt_addr)
+            self.lru_reset(vaddr)
             self._COUNTERS['PRED_WHEN_MEM'].inc()
             
         elif mode == "pred":
-            self.lru_reset(virt_addr)
+            self.lru_reset(vaddr)
             self._COUNTERS['PRED_WHEN_PRED'].inc()
             
         else:
             assert mode == 'bak'
-            self.fetch_to_mem(virt_addr, is_pred = True)
+            self.fetch_to_mem(vaddr, is_pred = True)
             self._COUNTERS['PRED_WHEN_BAK'].inc()
             self._COUNTERS['PRED_SPACE_AVAIL'].dec()
         
-    def fetch_preds(self, virt_addr):
+    def fetch_preds(self, vaddr):
         if self.PREDICTOR == None:
             return None
         space = self._COUNTERS['PRED_SPACE_AVAIL'].val
-        for pred_vaddr in self.PREDICTOR.predict(virt_addr, space):
+        for pred_vaddr in self.PREDICTOR.predict(vaddr, space):
             self.fetch_as_pred(pred_vaddr)
         
-    def get_phys_mem_off(self, virt_addr):
-        mode, off = self.get_virt_addr_state(virt_addr)
+    def get_phys_mem_off(self, vaddr):
+        mode, off = self.get_vaddr_state(vaddr)
         if mode == "bak":
             self._COUNTERS['FAULT_MAJ'].inc()
-            self.append_fault_file(virt_addr, 'major')
-            new_off = self.fetch_to_mem(virt_addr)
-            self.fetch_preds(virt_addr) 
+            self.append_fault_file(vaddr, 'major')
+            new_off = self.fetch_to_mem(vaddr)
+            self.fetch_preds(vaddr) 
             return new_off
         
         elif mode == "pred":
             self._COUNTERS['FAULT_MIN'].inc()
-            self.append_fault_file(virt_addr, 'minor')
-            self.enable_in_mem(virt_addr)
-            self.fetch_preds(virt_addr)  
+            self.append_fault_file(vaddr, 'minor')
+            self.enable_in_mem(vaddr)
+            self.fetch_preds(vaddr)  
             return off
         
         else:
             assert mode == "mem"
             self._COUNTERS['FAULT_NONE'].inc()
-            self.append_fault_file(virt_addr, 'none')
-            self.lru_reset(virt_addr)
+            self.append_fault_file(vaddr, 'none')
+            self.lru_reset(vaddr)
             return off
                 
     """
@@ -249,12 +249,12 @@ class VMM:
         self._COUNTERS['CURR_ALLOC_SIZE'].val = self.VIRT_MEM_SIZE
         
         for i in range(self.PHYS_MEM_SIZE):
-            self.set_virt_addr_state(i, "mem", i)
+            self.set_vaddr_state(i, "mem", i)
             
         for i in range(self.PHYS_BAK_SIZE):
-            self.set_virt_addr_state(i + self.PHYS_MEM_SIZE, "bak", i)
+            self.set_vaddr_state(i + self.PHYS_MEM_SIZE, "bak", i)
             
-        self.LRU_VIRT_ADDR = list(range(self.PHYS_MEM_SIZE))
+        self.LRU_VADDR = list(range(self.PHYS_MEM_SIZE))
         
         mem = VADDR(self)
         return mem

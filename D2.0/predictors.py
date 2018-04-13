@@ -15,9 +15,9 @@ class PRED_SEQ:
     def get_pred_mem_size(self, mem_size):
         return int(self.mem_sacrifice_ratio * mem_size)
     
-    def predict(self, virt_addr, quant):
+    def predict(self, vaddr, quant):
         if (quant > 0):
-            return [virt_addr + 1]
+            return [vaddr + 1]
         else:
             return []
 
@@ -34,24 +34,24 @@ class PRED_HIST:
         self._vaddr_link = {}
         self._vaddr_link_max = 1
         
-    def _get_vaddr_window(self, virt_addr):
-        self._vaddr_win.append(virt_addr)
+    def _get_vaddr_window(self, vaddr):
+        self._vaddr_win.append(vaddr)
         if len(self._vaddr_win) > self._vaddr_win_max:
             prev = self._vaddr_win.pop(0)
             return (prev, self._vaddr_win[:])
         else:
             return (None, self._vaddr_win[:])
     
-    def _get_vaddr_link(self, virt_addr):
-        if virt_addr in self._vaddr_link:
-            return self._vaddr_link[virt_addr][:]
+    def _get_vaddr_link(self, vaddr):
+        if vaddr in self._vaddr_link:
+            return self._vaddr_link[vaddr][:]
         else:
             return None
         
-    def _set_vaddr_link(self, virt_addr, link):
-        if virt_addr not in self._vaddr_link:
-            self._vaddr_link[virt_addr] = []
-        vlist = self._vaddr_link[virt_addr]
+    def _set_vaddr_link(self, vaddr, link):
+        if vaddr not in self._vaddr_link:
+            self._vaddr_link[vaddr] = []
+        vlist = self._vaddr_link[vaddr]
         
         if link in vlist:
             vlist.insert(0, vlist.pop(vlist.index(link)))
@@ -64,14 +64,14 @@ class PRED_HIST:
         return int(self.mem_sacrifice_ratio * mem_size)
     
     
-    def predict(self, virt_addr, quant):
+    def predict(self, vaddr, quant):
         ret = []
-        prev_virt_addr, window = self._get_vaddr_window(virt_addr)
+        prev_vaddr, window = self._get_vaddr_window(vaddr)
         
-        if prev_virt_addr:
-            self._set_vaddr_link(prev_virt_addr, virt_addr)
+        if prev_vaddr:
+            self._set_vaddr_link(prev_vaddr, vaddr)
         
-        prev_virt_preds = self._get_vaddr_link(virt_addr)        
+        prev_virt_preds = self._get_vaddr_link(vaddr)        
         while quant:
             if not prev_virt_preds:
                 break
