@@ -8,6 +8,7 @@ import numpy as np
 import logging
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
 def vaddr_histogram(filename, data):
     data['vaddr'].hist(bins = 100)
@@ -34,6 +35,7 @@ def run_visuals(filename = None):
     data = pd.read_csv(filename)
     vaddr_histogram(filename, data)
     fault_type_cumulative(filename, data)
-    
-run_visuals('faults_treeA.csv')
-run_visuals('faults_seq.csv')
+
+for file in os.listdir():
+    if file.endswith(".csv"):
+        run_visuals(file)
