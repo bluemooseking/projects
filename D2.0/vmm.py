@@ -87,6 +87,7 @@ class VMM:
                 'PRED_SPACE_AVAIL': COUNTER('Prediction Space Avail', self.logger),
                 'PRED_WHEN_MEM':    COUNTER('Prediction when Mem', self.logger),
                 'PRED_WHEN_PRED':   COUNTER('Prediction when Pred', self.logger),
+                'PRED_WHEN_BAK':    COUNTER('Prediction when Bak', self.logger),
                 
                 # Faults
                 'FAULT_MAJ':        COUNTER('Fault - Major', self.logger),
@@ -193,6 +194,7 @@ class VMM:
         else:
             assert mode == 'bak'
             self.fetch_to_mem(virt_addr, is_pred = True)
+            self._COUNTERS['PRED_WHEN_BAK'].inc()
             self._COUNTERS['PRED_SPACE_AVAIL'].dec()
         
     def fetch_preds(self, virt_addr):
