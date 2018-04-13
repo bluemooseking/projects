@@ -64,11 +64,20 @@ def run_test(name = None, testFunc = None,
         logging.critical("%30s: %d" % kvp)
     
 
-run_test("SEQ PREDNONE", test_sequential_array, 'faults_seq_Pnone.csv')
-run_test("BIN PREDNONE", test_binary_tree, 'faults_treeA_Pnone.csv') 
-run_test("SEQ PREDSEQ", test_sequential_array, 
-         'faults_seq_Pseq.csv', pred_def = {'mode' : 'seq'})
-run_test("BIN PREDSEQ", test_binary_tree, 
-         'faults_treeA_Pseq.csv', pred_def = {'mode' : 'seq'})         
+
+PREDS = [('PNONE',  None), 
+         ('PSEQ',   {'mode' : 'seq'}),
+         ('PHIST',  {'mode' : 'hist'}),
+        ]
+TESTS = [('TSEQ', test_sequential_array),
+         ('TBIN', test_binary_tree),
+         ]
+for (pname, pdef) in PREDS:
+    for (tname, tdef) in TESTS:
+        run_test(name = "%s %s" % (tname, pname),
+                 testFunc = tdef,
+                 faultFile = "%s_%s.csv" % (tname, pname),
+                 pred_def = pdef)
+      
             
             

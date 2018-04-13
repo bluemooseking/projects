@@ -7,7 +7,7 @@ Created on Thu Mar 29 16:23:54 2018
 
 import logging
 import random
-from predictors import PRED_SEQ
+from predictors import PRED_SEQ, PRED_HIST
 from counter import COUNTER
 from vaddr import VADDR
 
@@ -54,6 +54,10 @@ class VMM:
                 
             if pred_def["mode"] == 'seq':
                 self.PREDICTOR = PRED_SEQ(pred_def)
+                self._COUNTERS['PRED_SPACE_AVAIL'].val = self.PREDICTOR.get_pred_mem_size(self.PHYS_MEM_SIZE)
+                
+            elif pred_def["mode"] == 'hist':
+                self.PREDICTOR = PRED_HIST(pred_def)
                 self._COUNTERS['PRED_SPACE_AVAIL'].val = self.PREDICTOR.get_pred_mem_size(self.PHYS_MEM_SIZE)
                 
             else:
