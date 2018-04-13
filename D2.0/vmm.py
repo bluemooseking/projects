@@ -30,11 +30,6 @@ class VMM:
     
     # Prediction
     PREDICTOR = None
-        
-    CURRENT_ALLOC_SIZE = None
-    PREDICT_SPACE_AVAIL = None
-    PREDICT_WHEN_MEM = None
-    PREDICT_WHEN_PRED = None
       
     def init_fault_file(self, fault_file):
         if fault_file != None:
@@ -59,7 +54,7 @@ class VMM:
                 
             if pred_def["mode"] == 'seq':
                 self.PREDICTOR = PRED_SEQ(pred_def)
-                self.PREDICT_SPACE_AVAIL.val = self.PREDICTOR.get_pred_mem_size(self.PHYS_MEM_SIZE)
+                self._COUNTERS['PRED_SPACE_AVAIL'].val = self.PREDICTOR.get_pred_mem_size(self.PHYS_MEM_SIZE)
                 
             else:
                 raise ValueError(
@@ -87,11 +82,12 @@ class VMM:
         self.logger.debug("Bak Size: %d", self.PHYS_BAK_SIZE)
         
         # Init Counters
-        self.CURRENT_ALLOC_SIZE = COUNTER('Current Alloc Size', self.logger)
-        self.PREDICT_SPACE_AVAIL = COUNTER('Prediction Space Avail', self.logger)
-        self.PREDICT_WHEN_MEM = COUNTER('Prediction when Mem', self.logger)
-        self.PREDICT_WHEN_PRED = COUNTER('Prediction when Pred', self.logger)
-        
+        self._COUNTERS = {
+                'CURR_ALLOC_SIZE':  COUNTER('Current Alloc Size', self.logger),
+                'PRED_SPACE_AVAIL': COUNTER('Prediction Space Avail', self.logger),
+                'PRED_WHEN_MEM':    COUNTER('Prediction when Mem', self.logger),
+                'PRED_WHEN_PRED':   COUNTER('Prediction when Pred', self.logger)
+        }
         # Init Data structs
         self.VIRT_ADDR_MODE = [None] * phys_all_size
         self.VIRT_ADDR_OFFS = [None] * phys_all_size
@@ -109,12 +105,12 @@ class VMM:
     """
 
     def get_alloc(self):
-        val = self.CURRENT_ALLOC_SIZE.val
+        val = self._COUNTERS['CURR_ALLOC_SIZE'].val
         self.logger.debug("current alloc = %d", val)
         return val
     
     def is_virt_addr(self, virt_addr):
-        return (virt_addr < self.CURRENT_ALLOC_SIZE.val)
+        return (virt_addr < self._COUNTERS['CURR_ALLOC_SIZE'].val)
     
     def set_virt_addr_state(self, virt_addr, state, off):
         self.VIRT_ADDR_MODE[virt_addr] = state
@@ -157,7 +153,7 @@ class VMM:
         self.__phys_swap(o_off, i_off)
         
         if o_mode == "pred":
-            self.PREDICT_SPACE_AVAIL.inc()
+            self._COUNTERS['PRED_SPACE_AVAIL'].inc()
             
         self.set_virt_addr_state(o_virt_addr, "bak", i_off)
         
@@ -173,7 +169,7 @@ class VMM:
         mode, off = self.get_virt_addr_state(virt_addr)
         assert mode == "pred"
         self.set_virt_addr_state(virt_addr, "mem", off)
-        self.PREDICT_SPACE_AVAIL.inc()
+        self._COUNTERS['PRED_SPACE_AVAIL'].inc()
         self.lru_reset(virt_addr)
  
     def fetch_as_pred(self, virt_addr):
@@ -183,21 +179,21 @@ class VMM:
         mode, off = self.get_virt_addr_state(virt_addr)
         if mode == "mem":
             self.lru_reset(virt_addr)
-            self.PREDICT_WHEN_MEM.inc()
+            self._COUNTERS['PRED_WHEN_MEM'].inc()
             
         elif mode == "pred":
             self.lru_reset(virt_addr)
-            self.PREDICT_WHEN_PRED.inc()
+            self._COUNTERS['PRED_WHEN_PRED'].inc()
             
         else:
             assert mode == 'bak'
             self.fetch_to_mem(virt_addr, is_pred = True)
-            self.PREDICT_SPACE_AVAIL.dec()
+            self._COUNTERS['PRED_SPACE_AVAIL'].dec()
         
     def fetch_preds(self, virt_addr):
         if self.PREDICTOR == None:
             return None
-        space = self.PREDICT_SPACE_AVAIL.val
+        space = self._COUNTERS['PRED_SPACE_AVAIL'].val
         for pred_vaddr in self.PREDICTOR.predict(virt_addr, space):
             self.fetch_as_pred(pred_vaddr)
         
@@ -230,13 +226,13 @@ class VMM:
     def alloc_all(self):
         
         # Only do this once
-        if self.CURRENT_ALLOC_SIZE.val != 0:
+        if self._COUNTERS['CURR_ALLOC_SIZE'].val != 0:
             self.logger.warning("alloc all: vmm not empty")
             return -1
         
         # Set it up
         self.logger.debug("alloc all = %d", self.VIRT_MEM_SIZE)
-        self.CURRENT_ALLOC_SIZE.val = self.VIRT_MEM_SIZE
+        self._COUNTERS['CURR_ALLOC_SIZE'].val = self.VIRT_MEM_SIZE
         
         for i in range(self.PHYS_MEM_SIZE):
             self.set_virt_addr_state(i, "mem", i)
@@ -248,19 +244,12 @@ class VMM:
         
         mem = VADDR(self)
         return mem
-   
-    """
-    @property
-    def vaddr(self, virt_addr):
-        m_off = self.get_phys_mem_off(virt_addr)
-        return self.PHYS_MEM[m_off]
-        
-    @vaddr.setter
-    def vaddr(self, virt_addr, val):
-        m_off = self.get_phys_mem_off(virt_addr)
-        self.PHYS_MEM[m_off] = val
-    """
     
+    def get_counter_values(self):
+        ret = []
+        for counter in self._COUNTERS.values():
+            ret.append((counter.name, counter.val))
+        return ret
 
 """
 =============================================

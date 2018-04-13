@@ -25,8 +25,8 @@ def test_sequential_array(filename = None,
             mem[j] = data[j] + i
     for j in range(data_size):
         if (data[j] + m_loops - 1 != mem[j]):
-            return False
-    return True
+            return (False, vmm)
+    return (True, vmm)
     
 def test_binary_tree(filename = None,
                      pred_def = None):    
@@ -47,15 +47,22 @@ def test_binary_tree(filename = None,
                 mem[vaddr]
                 vaddr *= 2
                 vaddr += 2 if ((j << k) & tree_mask) else 1
-    return True
+    return (True, vmm)
     
 def run_test(name = None, testFunc = None,
              faultFile = None, pred_def = None):
+    logging.critical("==============================================")
     logging.critical("%s BEGIN" % (name))
-    if testFunc(faultFile, pred_def):
+    ret, vmm = testFunc(faultFile, pred_def)
+    if (ret):
         logging.critical("%s PASSED" % (name))
     else:
         logging.critical("%s FAILED" % (name))
+        
+    logging.critical("%s COUNTERS ->" % (name))
+    for kvp in vmm.get_counter_values():
+        logging.critical("%30s: %d" % kvp)
+    
 
 run_test("SEQ PREDNONE", test_sequential_array, 'faults_seq_Pnone.csv')
 run_test("BIN PREDNONE", test_binary_tree, 'faults_treeA_Pnone.csv') 

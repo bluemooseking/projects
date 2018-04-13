@@ -16,6 +16,7 @@ class COUNTER:
         if self._logger is None:
             return
         self._logger.debug(*args)
+        
     @property
     def val(self):
         self._dlog("get(%s) = %d", 
@@ -26,6 +27,14 @@ class COUNTER:
         self._dlog("set(%s) = %d -> %d", 
                 self._name, self._val, new_val)
         self._val = new_val
+        
+    @property
+    def name(self):
+        return self._name
+    @name.setter
+    def name(self, new_name):
+        self._name = new_name
+        
     def inc(self):
         self._val += 1
         self._dlog("inc(%s) -> %d", 
