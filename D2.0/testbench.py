@@ -65,18 +65,18 @@ def run_test(name = None, testFunc = None,
     
 
 
-PREDS = [('PNONE',  None), 
-         ('PSEQ',   {'mode' : 'seq'}),
-         ('PHIST',  {'mode' : 'hist'}),
+PREDS = [('P0-NONE',  None), 
+         ('P1-SEQ',   {'mode' : 'seq'}),
+         ('P2-HIST',  {'mode' : 'hist'}),
         ]
-TESTS = [('TSEQ', test_sequential_array),
-         ('TBIN', test_binary_tree),
+TESTS = [('T0-SEQ', test_sequential_array),
+         ('T1-BIN', test_binary_tree),
          ]
 for (pname, pdef) in PREDS:
     for (tname, tdef) in TESTS:
         run_test(name = "%s %s" % (tname, pname),
                  testFunc = tdef,
-                 faultFile = "%s_%s.csv" % (tname, pname),
+                 faultFile = "vmm.%s.%s.csv" % (tname, pname),
                  pred_def = pdef)
       
             
