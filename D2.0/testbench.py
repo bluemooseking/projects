@@ -9,12 +9,8 @@ import logging
 import random
 from vmm import VMM
 
-def gen_sequential_array_faults(filename = None,
-                                pred_def = None):
-    logging.critical("SEQ BEGIN")
-    if filename == None:
-        logging.error("Specify filename")
-    
+def test_sequential_array(filename = None,
+                          pred_def = None):   
     data_size = 1000
     m_ratio = 0.1
     m_loops = 100
@@ -29,16 +25,12 @@ def gen_sequential_array_faults(filename = None,
             mem[j] = data[j] + i
     for j in range(data_size):
         if (data[j] + m_loops - 1 != mem[j]):
-            logging.critical("SEQ VALIDATION FAILED")
-    logging.critical("SEQ VALIDATION PASSED")
+            return False
+    return True
     
-def gen_binary_tree_faults_A(filename = None,
-                             pred_def = None):
-    logging.critical("BINTREE BEGIN")
-    if filename == None:
-        logging.error("Specify filename")
-    
-    tree_depth = 15
+def test_binary_tree(filename = None,
+                     pred_def = None):    
+    tree_depth = 10
     tree_size = 2 ** tree_depth
     tree_mask = 2 ** (tree_depth - 2)
     m_ratio = 0.01
@@ -55,12 +47,21 @@ def gen_binary_tree_faults_A(filename = None,
                 mem[vaddr]
                 vaddr *= 2
                 vaddr += 2 if ((j << k) & tree_mask) else 1
-    logging.critical("BINTREE VALIDATION PASSED")
+    return True
     
-    
-#gen_sequential_array_faults('faults_seq_Pnone.csv')
-#gen_binary_tree_faults_A('faults_treeA_Pnone.csv') 
-#gen_sequential_array_faults('faults_seq_Pseq.csv', pred_def = {'mode' : 'seq'})
-#gen_binary_tree_faults_A('faults_treeA_Pseq.csv', pred_def = {'mode' : 'seq'})         
+def run_test(name = None, testFunc = None,
+             faultFile = None, pred_def = None):
+    logging.critical("%s BEGIN" % (name))
+    if testFunc(faultFile, pred_def):
+        logging.critical("%s PASSED" % (name))
+    else:
+        logging.critical("%s FAILED" % (name))
+
+run_test("SEQ PREDNONE", test_sequential_array, 'faults_seq_Pnone.csv')
+run_test("BIN PREDNONE", test_binary_tree, 'faults_treeA_Pnone.csv') 
+run_test("SEQ PREDSEQ", test_sequential_array, 
+         'faults_seq_Pseq.csv', pred_def = {'mode' : 'seq'})
+run_test("BIN PREDSEQ", test_binary_tree, 
+         'faults_treeA_Pseq.csv', pred_def = {'mode' : 'seq'})         
             
             
