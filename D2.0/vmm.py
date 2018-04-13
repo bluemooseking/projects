@@ -89,6 +89,8 @@ class VMM:
         self._COUNTERS = {
                 'CURR_ALLOC_SIZE':  COUNTER('Current Alloc Size', self.logger),
                 'PRED_SPACE_AVAIL': COUNTER('Prediction Space Avail', self.logger),
+                
+                # Prefetches
                 'PRED_WHEN_MEM':    COUNTER('Prediction when Mem', self.logger),
                 'PRED_WHEN_PRED':   COUNTER('Prediction when Pred', self.logger),
                 'PRED_WHEN_BAK':    COUNTER('Prediction when Bak', self.logger),
@@ -97,6 +99,11 @@ class VMM:
                 'FAULT_MAJ':        COUNTER('Fault - Major', self.logger),
                 'FAULT_MIN':        COUNTER('Fault - Minor', self.logger),
                 'FAULT_NONE':       COUNTER('Fault - None', self.logger),
+                
+                # Prediction Metrics
+                'PRED_HIT':         COUNTER('Prediction Hit', self.logger),
+                'PRED_MISS':        COUNTER('Prediction Miss', self.logger),
+                
         }
         # Init Data structs
         self.VADDR_MODE = [None] * phys_all_size
@@ -164,6 +171,7 @@ class VMM:
         
         if o_mode == "pred":
             self._COUNTERS['PRED_SPACE_AVAIL'].inc()
+            self._COUNTERS['PRED_MISS'].inc()
             
         self.set_vaddr_state(o_vaddr, "bak", i_off)
         
@@ -180,6 +188,7 @@ class VMM:
         assert mode == "pred"
         self.set_vaddr_state(vaddr, "mem", off)
         self._COUNTERS['PRED_SPACE_AVAIL'].inc()
+        self._COUNTERS['PRED_HIT'].inc()
         self.lru_reset(vaddr)
  
     def fetch_as_pred(self, vaddr):
