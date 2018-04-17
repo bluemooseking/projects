@@ -30,6 +30,23 @@ def test_sequential_array(filename = None,
             return (False, vmm)
     return (True, vmm)
     
+def test_random_array(filename = None,
+                     pred_def = None,
+                     test_def = None,
+                     ):
+    data_size = 1000
+    m_ratio = 0.1
+    m_loops = 100 
+    m_size = int(data_size * m_ratio)
+    b_size = data_size - m_size
+    vmm = VMM(m_size, b_size, fault_file = filename, pred_def = pred_def)
+    mem = vmm.alloc_all()
+    for i in range(m_loops):
+        for j in range(data_size):
+            mem[random.randrange(data_size)] = random.randrange(data_size)
+    return (True, vmm)
+    
+            
 def test_binary_tree(filename = None,
                      pred_def = None,
                      test_def = None,
@@ -85,6 +102,7 @@ PREDS = [('P0-NONE',  None),
 TESTS = [('T0-SEQ', test_sequential_array, None),
          ('T1-BIN', test_binary_tree, None),
          ('T2-BRND', test_binary_tree, {'rand_translate' : True}),
+         ('TX-RND', test_random_array, None),
          ]
 for (pname, pdef) in PREDS:
     for (tname, tfunc, tdef) in TESTS:
