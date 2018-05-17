@@ -1,0 +1,16 @@
+CC	= gcc
+CFLAGS	= -g -lm
+RM	= rm -f
+
+default: all
+
+all: sort_test
+
+sort_test: sort_test.c
+	$(CC) $(CFLAGS) -o sort_test sort_test.c
+
+debug: sort_test.c
+	$(CC) $(CFLAGS) -g -o sort_test sort_test.c
+
+clean veryclean:
+	$(RM) sort_test
