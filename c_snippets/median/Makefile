@@ -4,10 +4,10 @@ RM	= rm -f
 
 default: all
 
-all: med_heap
+all: median
 
-med_heap: med_heap.c
-	$(CC) $(CFLAGS) -o med_heap med_heap.c
+median: median.c heap.c
+	$(CC) $(CFLAGS) -o median median.c heap.c
 
 clean veryclean:
-	$(RM) med_heap
+	$(RM) median
